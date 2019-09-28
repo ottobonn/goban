@@ -17,12 +17,13 @@ class EffectModulator {
 class SceneManager {
   constructor({canvas}) {
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(76, 1, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(76, 1, 0.001, 1000);
     const context = canvas.getContext('webgl2');
     const renderer = new THREE.WebGLRenderer({
       canvas,
       context,
       antialias: true,
+      // alpha: true,
     });
 
     renderer.setPixelRatio(2);
@@ -59,12 +60,12 @@ class SceneManager {
     this.renderer = renderer;
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    const coneAngle = Math.PI / 3;
+    const coneAngle = Math.PI / 2;
     controls.minAzimuthAngle = -coneAngle;
     controls.maxAzimuthAngle = coneAngle;
 
-    controls.minPolarAngle = coneAngle;
-    controls.maxPolarAngle = Math.PI - coneAngle;
+    controls.minPolarAngle = Math.PI / 2 - coneAngle;
+    controls.maxPolarAngle = Math.PI / 2 + coneAngle;
 
     controls.maxDistance = 500;
     controls.zoomSpeed = 0.3;
@@ -74,8 +75,8 @@ class SceneManager {
 
     this.board = new Board({
       scene,
-      rows: 18,
-      cols: 18,
+      rows: 19,
+      cols: 19,
     });
 
     // Zoom to fit

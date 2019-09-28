@@ -5,8 +5,9 @@ class Grid {
     this.rows = rows;
     this.cols = cols;
 
-    this.rowHeight = height / rows;
-    this.colWidth = width / cols;
+    // If the grid has 19 row lines, it really has 18 "rows"
+    this.rowHeight = height / (rows - 1);
+    this.colWidth = width / (cols - 1);
   }
   gridToSceneCoordinates({row, col}) {
     return {

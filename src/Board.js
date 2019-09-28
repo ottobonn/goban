@@ -13,6 +13,92 @@ class Board {
       bottom: 12,
       right: 12,
     },
+    thickness: 25,
+    starPointRadius: 2,
+    starPointLocations: {
+      9: [
+        {
+          row: 2,
+          col: 2,
+        },
+        {
+          row: 6,
+          col: 2,
+        },
+        {
+          row: 4,
+          col: 4,
+        },
+        {
+          row: 2,
+          col: 6,
+        },
+        {
+          row: 6,
+          col: 6,
+        },
+      ],
+      13: [
+        {
+          row: 3,
+          col: 3,
+        },
+        {
+          row: 9,
+          col: 3,
+        },
+        {
+          row: 6,
+          col: 6,
+        },
+        {
+          row: 3,
+          col: 9,
+        },
+        {
+          row: 9,
+          col: 9,
+        },
+      ],
+      19: [
+        {
+          row: 3,
+          col: 3,
+        },
+        {
+          row: 9,
+          col: 3,
+        },
+        {
+          row: 15,
+          col: 3,
+        },
+        {
+          row: 3,
+          col: 9,
+        },
+        {
+          row: 9,
+          col: 9,
+        },
+        {
+          row: 15,
+          col: 9,
+        },
+        {
+          row: 3,
+          col: 15,
+        },
+        {
+          row: 9,
+          col: 15,
+        },
+        {
+          row: 15,
+          col: 15,
+        },
+      ],
+    },
   };
 
   constructor({rows, cols}) {
@@ -25,7 +111,6 @@ class Board {
       rows,
       cols,
     });
-    console.log(this.grid)
   }
 
   getDimensions() {
@@ -37,6 +122,7 @@ class Board {
     return {
       width: gridWidth + margins.left + margins.right,
       height: gridHeight + margins.top + margins.bottom,
+      depth: this.DIMENSIONS.thickness,
     };
   }
 
@@ -45,7 +131,7 @@ class Board {
     geometry.vertices = points;
 
     const material = new MeshLineMaterial({
-      color: 0x666666,
+      color: 0,
       lineWidth: 1,
     });
 
@@ -53,6 +139,21 @@ class Board {
     lineObject.setGeometry(geometry, t => 1);
 
     return new THREE.Mesh(lineObject.geometry, material);
+  }
+
+  makeCircle({x, y, radius}) {
+    const geometry = new THREE.CircleGeometry(this.DIMENSIONS.starPointRadius, 10);
+    geometry.translate(x, y, 0.01);
+    const material = new THREE.MeshBasicMaterial({color: 0xffff00});
+    return new THREE.Mesh(geometry, material);
+  }
+
+  makeBoard() {
+    const {width, height, depth} = this.getDimensions();
+    const geometry = new THREE.BoxGeometry(width, height, depth);
+    geometry.translate(0, 0, -depth / 2 - 10); // top of board is at z = 0
+    const material = new THREE.MeshBasicMaterial({color: 0x9e600b});
+    return new THREE.Mesh(geometry, material);
   }
 
   getSceneObjects() {
@@ -89,9 +190,22 @@ class Board {
       ]));
     }
 
+    const starPointLocations = this.DIMENSIONS.starPointLocations[this.rows] || [];
+    const starPoints = [];
+    for (const {row, col} of starPointLocations) {
+      const {x, y} = this.grid.gridToSceneCoordinates({row, col});
+      starPoints.push(this.makeCircle({
+        x,
+        y,
+        radius: this.DIMENSIONS.starPointRadius,
+      }));
+    }
+
     return [
       ...verticalLines,
       ...horizontalLines,
+      ...starPoints,
+      this.makeBoard(),
     ];
   }
 
