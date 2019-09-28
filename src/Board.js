@@ -8,12 +8,12 @@ class Board {
     rowHeight: 23.7,
     colWidth: 22,
     margins: {
-      top: 12,
-      left: 12,
-      bottom: 12,
-      right: 12,
+      top: 13.95,
+      left: 14.1,
+      bottom: 13.95,
+      right: 14.1,
     },
-    thickness: 25,
+    thickness: 151.5,
     starPointRadius: 2,
     starPointLocations: {
       9: [
