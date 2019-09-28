@@ -1,20 +1,26 @@
 import React, {Component} from 'react';
+import * as THREE from 'three';
+
+import {Goban} from './Goban';
 import './App.css';
 
-import {SceneManager} from './SceneManager';
+window.THREE = THREE;
 
 class App extends Component {
   constructor(props) {
     super(props);
-    this.canvasRef = React.createRef();
     this.state = {
       width: 1,
       height: 1,
     }
+    this.boundUpdateDimensions = this.updateDimensions.bind(this);
   }
   render() {
     return (
-      <canvas id="main" ref={this.canvasRef}></canvas>
+      <Goban
+        width={this.state.width}
+        height={this.state.height}
+      />
     );
   }
   updateDimensions() {
@@ -22,26 +28,10 @@ class App extends Component {
   }
   componentDidMount(){
     this.updateDimensions();
-    window.addEventListener("resize", this.updateDimensions.bind(this));
-
-    const sceneManager = new SceneManager({
-      canvas: this.canvasRef.current,
-    });
-
-    const animate = () => {
-      this.animationFrameRequest = requestAnimationFrame(animate);
-      sceneManager.animate({
-        width: this.state.width,
-        height: this.state.height,
-      });
-    }
-    animate();
+    window.addEventListener("resize", this.boundUpdateDimensions);
   }
   componentWillUnmount() {
-    if (this.animationFrameRequest) {
-      cancelAnimationFrame(this.animationFrameRequest);
-    }
-    window.removeEventListener("resize", this.updateDimensions.bind(this));
+    window.removeEventListener("resize", this.boundUpdateDimensions);
   }
 }
 

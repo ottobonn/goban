@@ -4,11 +4,13 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "postprocessing": "^5.1.1",
+    "postprocessing": "^6.7.0",
     "react": "^16.6.0",
     "react-dom": "^16.6.0",
     "react-scripts": "2.1.1",
-    "three": "^0.98.0",
+    "three": "^0.108.0",
+    "three-orbitcontrols": "^2.108.1",
+    "three-trackballcontrols": "0.0.8",
     "three.meshline": "^1.2.0"
   },
   "scripts": {

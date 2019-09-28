@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import {MeshLine, MeshLineMaterial} from 'three.meshline';
 import {EffectComposer, EffectPass, RenderPass, ChromaticAberrationEffect} from 'postprocessing';
+import OrbitControls from 'three-orbitcontrols';
 
-window.THREE = THREE;
+import {Board} from './Board';
 
 class EffectModulator {
   constructor({effect, modulator}) {
@@ -57,38 +57,43 @@ class SceneManager {
     this.scene = scene;
     this.camera = camera;
     this.renderer = renderer;
-    camera.position.z = 5;
 
-    this.makeTestCurve(scene);
-  }
+    const controls = new OrbitControls(camera, renderer.domElement);
+    const coneAngle = Math.PI / 3;
+    controls.minAzimuthAngle = -coneAngle;
+    controls.maxAzimuthAngle = coneAngle;
 
-  makeTestCurve(scene) {
-    const points = [];
-    for( var j = 0; j <= 2 * Math.PI; j += Math.PI / 30 ) {
-    	var v = new THREE.Vector3( Math.cos( j ), Math.sin( j ), 0 );
-    	points.push(v);
-    }
+    controls.minPolarAngle = coneAngle;
+    controls.maxPolarAngle = Math.PI - coneAngle;
 
-    const geometry = new THREE.Geometry();
-    geometry.vertices = points;
+    controls.maxDistance = 500;
+    controls.zoomSpeed = 0.3;
+    controls.enablePan = false;
+    controls.enableDamping = true;
+    this.controls = controls;
 
-    const material = new MeshLineMaterial({
-      color: 0xffffff,
-      lineWidth: 0.1,
+    this.board = new Board({
+      scene,
+      rows: 18,
+      cols: 18,
     });
 
-    const curveObject = new MeshLine();
-    curveObject.setGeometry(geometry, t => 1 - t);
+    // Zoom to fit
+    const {width: boardWidth, height: boardHeight} = this.board.getDimensions();
+    this.camera.position.z = (Math.max(boardWidth, boardHeight) / 2) / Math.tan(THREE.Math.degToRad(this.camera.fov / 2));
 
-    scene.add(new THREE.Mesh(curveObject.geometry, material));
+    scene.add(...this.board.getSceneObjects());
   }
 
   animate(params) {
+    // this.controls.update();
     const {width, height} = params;
     if (width !== this.lastWidth || height !== this.lastHeight) {
       this.composer.setSize(width, height);
       this.renderer.setSize(width, height);
+
       this.camera.aspect = width / height;
+
       this.camera.updateProjectionMatrix();
       this.lastWidth = width;
       this.lastHeight = height;
@@ -98,6 +103,8 @@ class SceneManager {
     params.amount = Math.random();
 
     // TODO render the board here
+
+
 
     this.effectModulators.forEach(effectModulator => effectModulator.animate(params));
     this.composer.render(this.scene, this.camera);
