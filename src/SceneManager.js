@@ -70,7 +70,6 @@ class SceneManager {
     controls.maxDistance = 500;
     controls.zoomSpeed = 0.3;
     controls.enablePan = false;
-    controls.enableDamping = true;
     this.controls = controls;
 
     this.board = new Board({
