@@ -4,43 +4,18 @@ import OrbitControls from 'three-orbitcontrols';
 
 import {Board} from './Board';
 
-class EffectModulator {
-  constructor({effect, modulator}) {
-    this.effect = effect;
-    this.modulator = modulator || (() => {});
-  }
-  animate(params) {
-    this.modulator(this.effect, params);
-  }
-}
-
 class SceneManager {
   constructor({canvas}) {
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(76, 1, 0.001, 1000);
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
     const context = canvas.getContext('webgl2');
     const renderer = new THREE.WebGLRenderer({
       canvas,
       context,
       antialias: true,
-      // alpha: true,
     });
 
-    renderer.setPixelRatio(2);
-
-    this.effectModulators = [
-      new EffectModulator({
-        effect: new ChromaticAberrationEffect(),
-        modulator(effect, {amount}) {
-          const minOffset = new THREE.Vector2(0, 0);
-          const maxOffset = new THREE.Vector2(0.05, 0.05);
-          const offset = minOffset.lerp(maxOffset, amount);
-          effect.offset = offset;
-        },
-      }),
-    ];
-
-    // const effects = this.effectModulators.map(modulator => modulator.effect);
+    renderer.setPixelRatio(window.devicePixelRatio);
 
     const composer = new EffectComposer(renderer);
 
@@ -61,8 +36,8 @@ class SceneManager {
 
     const controls = new OrbitControls(camera, renderer.domElement);
     const coneAngle = Math.PI / 2;
-    controls.minAzimuthAngle = -coneAngle;
-    controls.maxAzimuthAngle = coneAngle;
+    // controls.minAzimuthAngle = -coneAngle;
+    // controls.maxAzimuthAngle = coneAngle;
 
     controls.minPolarAngle = Math.PI / 2 - coneAngle;
     controls.maxPolarAngle = Math.PI / 2 + coneAngle;
@@ -73,9 +48,22 @@ class SceneManager {
     this.controls = controls;
 
     this.board = new Board({
-      scene,
       rows: 19,
       cols: 19,
+    });
+
+    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.2);
+    scene.add(ambientLight);
+
+    const directionalLightPositions = [
+      // [200, 200, 200],
+      [-100, -100, -100],
+    ];
+
+    directionalLightPositions.forEach(position => {
+      const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.3);
+      directionalLight.position.set(...position);
+      scene.add(directionalLight);
     });
 
     // Zoom to fit
@@ -86,7 +74,8 @@ class SceneManager {
   }
 
   animate(params) {
-    // this.controls.update();
+    this.controls.update();
+
     const {width, height} = params;
     if (width !== this.lastWidth || height !== this.lastHeight) {
       this.composer.setSize(width, height);
@@ -98,15 +87,7 @@ class SceneManager {
       this.lastWidth = width;
       this.lastHeight = height;
     }
-    // TODO adding to params seems to mix concerns; who should own the clock?
-    params.clock = this.clock;
-    params.amount = Math.random();
 
-    // TODO render the board here
-
-
-
-    this.effectModulators.forEach(effectModulator => effectModulator.animate(params));
     this.composer.render(this.scene, this.camera);
   }
 }

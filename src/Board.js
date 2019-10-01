@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {MeshLine, MeshLineMaterial} from 'three.meshline';
 
 import {Grid} from './Grid';
+import {GridLines} from './GridLines';
 
 class Board {
   DIMENSIONS = {
@@ -13,92 +14,8 @@ class Board {
       bottom: 13.95,
       right: 14.1,
     },
-    thickness: 151.5,
+    thickness: 38.1,
     starPointRadius: 2,
-    starPointLocations: {
-      9: [
-        {
-          row: 2,
-          col: 2,
-        },
-        {
-          row: 6,
-          col: 2,
-        },
-        {
-          row: 4,
-          col: 4,
-        },
-        {
-          row: 2,
-          col: 6,
-        },
-        {
-          row: 6,
-          col: 6,
-        },
-      ],
-      13: [
-        {
-          row: 3,
-          col: 3,
-        },
-        {
-          row: 9,
-          col: 3,
-        },
-        {
-          row: 6,
-          col: 6,
-        },
-        {
-          row: 3,
-          col: 9,
-        },
-        {
-          row: 9,
-          col: 9,
-        },
-      ],
-      19: [
-        {
-          row: 3,
-          col: 3,
-        },
-        {
-          row: 9,
-          col: 3,
-        },
-        {
-          row: 15,
-          col: 3,
-        },
-        {
-          row: 3,
-          col: 9,
-        },
-        {
-          row: 9,
-          col: 9,
-        },
-        {
-          row: 15,
-          col: 9,
-        },
-        {
-          row: 3,
-          col: 15,
-        },
-        {
-          row: 9,
-          col: 15,
-        },
-        {
-          row: 15,
-          col: 15,
-        },
-      ],
-    },
   };
 
   constructor({rows, cols}) {
@@ -112,78 +29,6 @@ class Board {
       cols,
     });
   }
-
-  // TODO remove magic scaling 10
-  makeLine(ctx, fromX, fromY, toX, toY, strokeWidth) {
-    ctx.beginPath();
-    ctx.strokeStyle = '#eeeeee';
-    ctx.lineWidth = strokeWidth;
-    ctx.moveTo(fromX * 10, fromY * 10);
-    ctx.lineTo(toX * 10, toY * 10);
-    ctx.stroke();
-  }
-
-  // TODO remove magic scaling 10
-  makeCircle(ctx, {x, y, radius}) {
-    ctx.beginPath();
-    ctx.arc(x * 10, y * 10, radius * 10, 0, 2 * Math.PI);
-    ctx.fillStyle = '#0000ff';
-    ctx.fill();
-  }
-
-  makeTexture() {
-    const {width, height} = this.getDimensions();
-
-    this.canvas = document.createElement('canvas');
-    document.body.appendChild(this.canvas);
-
-    const BITMAP_PIXELS_PER_MM = 10;
-    this.canvas.width = width * BITMAP_PIXELS_PER_MM;
-    this.canvas.height = height * BITMAP_PIXELS_PER_MM;
-
-    const texture = new THREE.Texture(this.canvas);
-    const ctx = this.canvas.getContext('2d');
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
-
-    for (let col = 0; col < this.cols; col++) {
-      const {x: xStart, y: yStart} = this.grid.gridToSceneCoordinates({
-        row: 0,
-        col,
-      });
-      const {x: xEnd, y: yEnd} = this.grid.gridToSceneCoordinates({
-        row: this.rows - 1,
-        col,
-      });
-      this.makeLine(ctx, xStart, yStart, xEnd, yEnd, 1 * BITMAP_PIXELS_PER_MM);
-    }
-
-    for (let row = 0; row < this.rows; row++) {
-      const {x: xStart, y: yStart} = this.grid.gridToSceneCoordinates({
-        row,
-        col: 0,
-      });
-      const {x: xEnd, y: yEnd} = this.grid.gridToSceneCoordinates({
-        row,
-        col: this.cols - 1,
-      });
-      this.makeLine(ctx, xStart, yStart, xEnd, yEnd, 1 * BITMAP_PIXELS_PER_MM);
-    }
-
-    const starPointLocations = this.DIMENSIONS.starPointLocations[this.rows] || [];
-    for (const {row, col} of starPointLocations) {
-      const {x, y} = this.grid.gridToSceneCoordinates({row, col});
-      this.makeCircle(ctx, {
-        x,
-        y,
-        radius: this.DIMENSIONS.starPointRadius,
-      });
-    }
-
-    texture.needsUpdate = true;
-    return texture;
-  }
-
 
   getDimensions() {
     const {
@@ -200,33 +45,47 @@ class Board {
 
   makeBoard() {
     const {width, height, depth} = this.getDimensions();
-    const geometry = new THREE.BoxGeometry(width, height, depth);
+    const geometry = new THREE.BoxBufferGeometry(width, height, depth);
     geometry.translate(0, 0, -depth / 2); // top of board is at z = 0
 
-    const topMaterial = new THREE.MeshBasicMaterial({
-      map: this.makeTexture(),
+    // Add a second material to the front face (triangles 24-30) for the lines
+    geometry.addGroup(24, 6, 6);
+
+    const surfaceMaterial = new THREE.MeshPhongMaterial({
+      map: new THREE.TextureLoader().load('/assets/textures/walnut.jpg'),
+      normalMap: new THREE.TextureLoader().load('/assets/textures/walnut_normal.jpg'),
     });
 
-    const bottomMaterial = new THREE.MeshBasicMaterial({
-      color: '#ff0000',
+    const gridLines = new GridLines({
+      grid: this.grid,
+      margins: this.DIMENSIONS.margins,
+      lineColor: 0xfbc90b,
+    });
+    const linesMaterial = new THREE.MeshBasicMaterial({
+      map: gridLines.makeTexture(),
+      transparent: true,
     });
 
-    const edgeGrainMaterial = new THREE.MeshBasicMaterial({
-      color: '#00ff00',
+    const edgeGrainMaterial = new THREE.MeshPhongMaterial({
+      map: new THREE.TextureLoader().load('/assets/textures/walnut.jpg'),
+      normalMap: new THREE.TextureLoader().load('/assets/textures/walnut_normal.jpg'),
+      normalMapMode: THREE.ObjectSpaceNormalMap,
     });
 
-    const endGrainMaterial = new THREE.MeshBasicMaterial({
-      color: '#ff0000',
-    });
+    const endGrainMaterial = edgeGrainMaterial; // TODO
 
-    return new THREE.Mesh(geometry, [
+    const mesh = new THREE.Mesh(geometry, [
       edgeGrainMaterial,
       edgeGrainMaterial,
       endGrainMaterial,
       endGrainMaterial,
-      topMaterial,
-      bottomMaterial,
+      surfaceMaterial,
+      surfaceMaterial,
+      linesMaterial,
     ]);
+    // mesh.castShadow = true;
+
+    return mesh;
   }
 
   getSceneObjects() {

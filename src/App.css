@@ -7,3 +7,15 @@ canvas#main {
   height: 100%;
   /* display: none; */
 }
+
+.accent {
+  height: 200px;
+  width: 100%;
+  background-color: teal;
+  position: absolute;
+  top: 0;
+  z-index: -1;
+  color: white;
+  padding: 1em;
+  font-family: Lato, Rubik, sans-serif;
+}
