@@ -53,7 +53,6 @@ class Board {
 
     const surfaceMaterial = new THREE.MeshPhongMaterial({
       map: new THREE.TextureLoader().load('/assets/textures/walnut.jpg'),
-      normalMap: new THREE.TextureLoader().load('/assets/textures/walnut_normal.jpg'),
     });
 
     const gridLines = new GridLines({
@@ -69,7 +68,6 @@ class Board {
     const edgeGrainMaterial = new THREE.MeshPhongMaterial({
       map: new THREE.TextureLoader().load('/assets/textures/walnut.jpg'),
       normalMap: new THREE.TextureLoader().load('/assets/textures/walnut_normal.jpg'),
-      normalMapMode: THREE.ObjectSpaceNormalMap,
     });
 
     const endGrainMaterial = edgeGrainMaterial; // TODO
@@ -83,15 +81,14 @@ class Board {
       surfaceMaterial,
       linesMaterial,
     ]);
-    // mesh.castShadow = true;
+
+    mesh.receiveShadow = true;
 
     return mesh;
   }
 
-  getSceneObjects() {
-    return [
-      this.makeBoard(),
-    ];
+  getSceneObject() {
+    return this.makeBoard();
   }
 
   update() {

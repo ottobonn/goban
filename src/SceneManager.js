@@ -3,6 +3,7 @@ import {EffectComposer, EffectPass, RenderPass, ChromaticAberrationEffect} from 
 import OrbitControls from 'three-orbitcontrols';
 
 import {Board} from './Board';
+import {Stone} from './Stone';
 
 class SceneManager {
   constructor({canvas}) {
@@ -16,6 +17,8 @@ class SceneManager {
     });
 
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.soft = true;
 
     const composer = new EffectComposer(renderer);
 
@@ -52,25 +55,56 @@ class SceneManager {
       cols: 19,
     });
 
-    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.2);
+    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.4);
     scene.add(ambientLight);
 
-    const directionalLightPositions = [
-      // [200, 200, 200],
-      [-100, -100, -100],
-    ];
+    const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.4);
+    directionalLight.position.set(30, 30, 50);
+    directionalLight.castShadow = true;
+    directionalLight.shadowCameraVisible = true;
 
-    directionalLightPositions.forEach(position => {
-      const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.3);
-      directionalLight.position.set(...position);
-      scene.add(directionalLight);
-    });
+    directionalLight.shadowCameraLeft = -250;
+    directionalLight.shadowCameraRight = 250;
+    directionalLight.shadowCameraTop = 250;
+    directionalLight.shadowCameraBottom = -250;
+
+    directionalLight.shadowCameraNear = 20;
+    directionalLight.shadowCameraFar = 200;
+
+    scene.add(directionalLight);
+
+    // const lightHelper = new THREE.DirectionalLightHelper(directionalLight);
+    // scene.add(lightHelper);
+    //
+    //
+    // const cameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
+    // scene.add(cameraHelper);
+    //
+    //
+    // scene.add(new THREE.AxisHelper(200));
+
+    const light = new THREE.PointLight(0xffffff, 0.1);
+    camera.add(light);
+    scene.add(camera);
 
     // Zoom to fit
     const {width: boardWidth, height: boardHeight} = this.board.getDimensions();
     this.camera.position.z = (Math.max(boardWidth, boardHeight) / 2) / Math.tan(THREE.Math.degToRad(this.camera.fov / 2));
 
-    scene.add(...this.board.getSceneObjects());
+    scene.add(this.board.getSceneObject());
+
+    const blackStone = new Stone({material: new THREE.MeshPhongMaterial({
+      color: 0x333333,
+    })}).getSceneObject();
+    scene.add(blackStone);
+
+    const whiteStone = new Stone({material: new THREE.MeshPhongMaterial({
+      color: 0xffffff,
+    })}).getSceneObject();
+    const {x, y} = this.board.grid.gridToSceneCoordinates({row: 8, col: 8});
+    whiteStone.position.x = x;
+    whiteStone.position.y = y;
+    scene.add(whiteStone);
   }
 
   animate(params) {
